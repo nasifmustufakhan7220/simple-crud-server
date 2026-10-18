@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 import "dotenv/config";
 
 const app = express();
@@ -34,12 +34,43 @@ app.get("/users", async (req, res) => {
   res.send(allUsers);
 });
 
+app.get("/users/:id", async(req,res)=>{
+    const id = req.params.id;
+    const query = {_id: new ObjectId(id)};
+    const result = await users.findOne(query);
+    res.send(result);
+})
+
 app.post("/users", async (req, res) => {
   const newUser = req.body;
   const result = await users.insertOne(newUser);
   res.send(result);
   console.log(`A document was inserted with the _id: ${result.insertedId}`);
 });
+
+app.patch("/users/:id", async(req,res)=>{
+    const id = req.params.id;
+    const updateUser = req.body;
+    const query = {_id: new ObjectId(id)};
+    const options = {upsert: true};
+    const updateDoc = {
+        $set:{
+            name: req.body.name,
+            email: req.body.email,
+        }
+    }
+
+    const result = await users.updateOne(query, updateDoc, options);
+
+    res.send(result);
+})
+
+app.delete("/users/:id", async(req,res)=>{
+    const id = req.params.id;
+    const query = {_id: new ObjectId(id)};
+    const result = await users.deleteOne(query);
+    res.send(result);
+})
 
 app.listen(port, () => {
   console.log(`Simple CRUD is running on ${port} port`);
